@@ -1,0 +1,20 @@
+<!-- templates/replace_prompt.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Replace Reservation?</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ timestamp }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Replace Reservation?</h1>
+        <p>You already have a reservation for:</p>
+        <p><strong>Ride:</strong> {{ reservation.ride_name }}</p>
+        <p><strong>Wait Time:</strong> {{ reservation.wait_time | int }} minutes</p>
+        <form method="POST">
+            <button type="submit" name="choice" value="yes">Yes, replace</button>
+            <button type="submit" name="choice" value="no">No thanks</button>
+        </form>
+    </div>
+</body>
+</html>

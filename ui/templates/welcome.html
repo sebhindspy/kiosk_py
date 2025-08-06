@@ -1,0 +1,39 @@
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ timestamp }}">
+
+</head>
+
+<body>
+
+  <!-- Spinner overlay -->
+  <div id="spinner" class="spinner-overlay" style="display: none;">
+    <div class="spinner"></div>
+  </div>
+
+  <div class="viewport-center">
+    <!-- Your existing content like h1, p, buttons, etc. -->
+    <img src="{{ url_for('static', filename='images/pool_accesso.png') }}" alt="Welcome Image" class="welcome-image">
+    <h1>Welcome to the Qband kiosk</h1>
+    <p>Please tap your Qband below to start</p>
+    <!--
+    <a href="/tap" class="cta-button">Simulate NFC Tap</a>
+    -->
+  </div>
+</body>
+
+<!--
+<script>
+  
+  function showSpinnerAndRedirect() {
+    document.getElementById('spinner').style.display = 'flex';
+    window.location.href = '/tap';
+  }
+
+  // Simulate NFC detection after a short delay (for testing)
+  // In production, replace this with actual NFC detection logic
+  setTimeout(showSpinnerAndRedirect, 1000);
+  
+</script>
+-->
+
+

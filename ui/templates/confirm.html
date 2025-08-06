@@ -1,0 +1,20 @@
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ timestamp }}">
+
+</head>
+
+<body>
+  
+  <div class="viewport-center">
+    <!-- Your existing content like h1, p, buttons, etc. -->
+  
+    <h2>You're all set!</h2>
+    <p>Your reservation has been written to your Qband. Enjoy your ride!</p>
+
+    <form action="{{ url_for('welcome') }}" method="get">
+      <button type="submit" class="cta-button">Start over</button>
+    </form>
+
+  </div>
+
+</body>

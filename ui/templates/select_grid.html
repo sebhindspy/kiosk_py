@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select Ride</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ timestamp }}">
+</head>
+
+<body>
+  <!-- Spinner overlay -->
+  <div id="spinner" class="spinner-overlay" style="display: none;">
+    <div class="spinner"></div>
+  </div>
+
+  <div class="viewport-center">
+    <h2>Choose a ride to reserve</h2>
+
+    <div class="attraction-grid">
+      {% for ride in attractions %}
+        <form action="/reserve/{{ ride['id'] }}" method="get" class="ride-card">
+          {% if ride.image %}
+            <img src="{{ ride.image }}" alt="{{ ride.name }}" class="ride-image">
+          {% endif %}
+          <button type="submit" data-show-spinner>
+            {{ ride.name }} – {{ ride.wait_time | int }} min
+          </button>
+        </form>
+      {% endfor %}
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const buttons = document.querySelectorAll("button[data-show-spinner]");
+      buttons.forEach(button => {
+        button.addEventListener("click", () => {
+          document.getElementById("spinner").style.display = "flex";
+        });
+      });
+    });
+  </script>
+</body>
+</html>

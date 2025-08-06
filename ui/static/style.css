@@ -1,0 +1,181 @@
+/* Reset + base layout */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", sans-serif;
+  background-color: #06a5dd !important;
+  color: #fff;
+  text-align: center;
+}
+
+/* Full-screen kiosk layout */
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Title and messaging */
+h1, h2 {
+  font-size: 4em;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+}
+
+p {
+  font-size: 2.5em;
+  margin-bottom: 2em;
+}
+
+/* Buttons (CTAs) */
+button {
+  padding: 1.5em;
+  margin: 16px;
+  width: 528px;
+  font-size: 2em;
+  border: none;
+  border-radius: 16px;
+  background-color: #4caf50 ;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+button:hover {
+  background-color: #419844;
+  transform: scale(1.05);
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+/* Responsive grid for multiple attractions */
+.attraction-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.attraction-grid form {
+  margin: 0.5em;
+}
+
+.confirmation-card {
+  background-color: white;
+  border-radius: 12px;
+  padding: 1em;
+  /*margin: 2em auto;*/
+  width: 80%;
+  max-width: 500px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.viewport-center {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* Full height of the viewport */
+}
+
+/* for the grid view
+.ride-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 560px;
+  height: 400px;
+  margin: 1em;
+  padding: 1em;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.ride-image {
+  width: 100%;
+  max-width: 528px;
+  height: auto;
+  border-radius: 16px;
+}
+*/
+
+.spinner-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.spinner {
+  border: 8px solid #f3f3f3;
+  border-top: 8px solid #06a5dd;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.carousel-container {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  gap: 1rem;
+  padding: 1rem;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+}
+
+.carousel-container::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}
+
+.ride-card {
+  flex: 0 0 auto;
+  scroll-snap-align: center;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  width: 560px;
+  height: 400px;
+  text-align: center;
+  padding: 1rem;
+}
+
+.ride-image {
+  
+  max-width: 528px;
+  height: 100%;
+  max-height: 226px;
+  object-fit: cover;
+  border-radius: 16px;
+}
+
+.carousel-wrapper {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.carousel-title {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.welcome-image {
+  width: 100%;
+  max-width: 900px;
+  height: auto;
+  border-radius: 16px;
+}

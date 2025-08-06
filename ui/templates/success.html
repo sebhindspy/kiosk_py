@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Reservation Confirmed</title>
+  <meta http-equiv="refresh" content="30;url={{ url_for('welcome') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ timestamp }}">
+
+</head>
+<body>
+
+  <!-- Spinner overlay -->
+  <div id="spinner" class="spinner-overlay" style="display: none;">
+    <div class="spinner"></div>
+  </div>
+
+  <div class="viewport-center">
+    <h1>Your reservation is confirmed!</h1>
+    <p>You are going to ride <strong>{{ reservation.ride_name }}</strong> in <strong>{{ reservation.wait_time | int }}</strong> minutes.</p>
+
+    <p class="highlight">Please tap your Qband again to save your reservation.</p>
+
+    <div id="status-message">Waiting for card...</div>
+  </div>
+
+  <script>
+    async function waitForCardWrite() {
+      const spinner = document.getElementById('spinner');
+      spinner.style.display = 'flex';
+
+      try {
+        const response = await fetch('/write_card', { method: 'POST' });
+        const result = await response.json();
+
+        spinner.style.display = 'none';
+
+        if (result.success) {
+          document.getElementById('status-message').textContent = "Reservation written to card. Redirecting...";
+          setTimeout(() => {
+            window.location.href = "/confirm";
+          }, 1000);
+        } else {
+          document.getElementById('status-message').textContent = "Failed to write to card: " + result.message;
+        }
+      } catch (err) {
+        spinner.style.display = 'none';
+        document.getElementById('status-message').textContent = "Error writing to card.";
+      }
+    }
+
+    setTimeout(waitForCardWrite, 1000);
+  </script>
+</body>
+</html>
