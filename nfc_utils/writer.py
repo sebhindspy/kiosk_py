@@ -69,6 +69,21 @@ def write_reservation_to_card(reservation):
         else:
             print("[WARNING] Failed to read UID.")
 
+        # --- Preserve guest email fields ---
+        # Read email length from 0x100
+        resp, sw1, sw2 = conn.transmit([0x00, 0xB0, 0x01, 0x00, 0x01])
+        if (sw1, sw2) == (0x90, 0x00) and resp and 0 < resp[0] <= 127:
+            email_len = resp[0]
+            # Read email from 0x101
+            resp2, sw1, sw2 = conn.transmit([0x00, 0xB0, 0x01, 0x01, email_len])
+            if (sw1, sw2) == (0x90, 0x00):
+                email_bytes = bytes(resp2)
+            else:
+                email_bytes = b''
+        else:
+            email_len = 0
+            email_bytes = b''
+
         # Prepare payload
         command_seq = 1
         attraction_id = reservation.get("attraction_id", 1)
@@ -77,7 +92,6 @@ def write_reservation_to_card(reservation):
         ride_name_bytes = ride_name.encode("ascii", errors="ignore")
         ride_name_len = len(ride_name_bytes)
 
-        print("write stage 2")
         payload = bytearray(384)
         payload[0x40] = command_seq
         payload[0x43] = 0x40
@@ -86,31 +100,29 @@ def write_reservation_to_card(reservation):
         payload[0x46:0x48] = wait_time_secs.to_bytes(2, byteorder='little')
         payload[0x80:0x80+ride_name_len] = ride_name_bytes
 
-        print("write stage 3")
+        # --- Restore guest email fields ---
+        if email_len > 0 and len(email_bytes) == email_len:
+            payload[0x100] = email_len
+            payload[0x101:0x101+email_len] = email_bytes
+
         record = ndef.Record('urn:nfc:ext:qb3:memory', '1', payload)
         msg = b''.join(ndef.message_encoder([record]))
-        print("write stage 3.5")
 
         # Write to card
         conn.transmit([0x00, 0xA4, 0x04, 0x00, 0x07] + [0xD2, 0x76, 0x00, 0x00, 0x85, 0x01, 0x01])
-        print("write stage 4")
         conn.transmit([0x00, 0xA4, 0x00, 0x0C, 0x02] + [0x00, 0x01])
-        print("write stage 5")
         conn.transmit([0x00, 0xD6, 0x00, 0x00, 0x02, 0x00, 0x00])
-        print("write stage 6")
 
         offset = 0
         total_len = len(msg)
         while offset < total_len:
             wr_len = min(0xF6, total_len - offset)
-            print(f"[NFC] Write length {wr_len}")
             p1 = ((offset + 2) >> 8) & 0xFF
             p2 = (offset + 2) & 0xFF
             apdu = [0x00, 0xD6, p1, p2, wr_len] + list(msg[offset:offset+wr_len])
             conn.transmit(apdu)
             offset += wr_len
 
-        print("write stage 7")
         length_bytes = [len(msg) >> 8, len(msg) & 0xFF]
         conn.transmit([0x00, 0xD6, 0x00, 0x00, 0x02] + length_bytes)
 
@@ -124,4 +136,3 @@ def write_reservation_to_card(reservation):
     finally:
         controller.nfc_writing_in_progress = False
         print("[DEBUG] NFC polling resumed.")
-

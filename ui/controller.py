@@ -33,7 +33,7 @@ def safe_evaluate_js(js_code):
     threading.Thread(target=run_js).start()
 
 
-def handle_card_poll(tag_uid, reservation):
+def handle_card_poll(tag_uid, reservation, guest_email):
     global last_tag, device_id, existing_reservation, nfc_writing_in_progress
 
     if nfc_writing_in_progress:
@@ -46,6 +46,7 @@ def handle_card_poll(tag_uid, reservation):
 
     print(f"[NFC] Card tapped with UID: {tag_uid}")
     print(f"[NFC] Reservation data: {reservation}")
+    print(f"[NFC] Guest email from card: {guest_email}")
 
     safe_evaluate_js("""
       const spinner = document.getElementById('spinner');
@@ -57,7 +58,10 @@ def handle_card_poll(tag_uid, reservation):
             print("[MOCK] Skipping login in mock API mode")
             device_id = "MOCK-DEVICE-ID"
         else:
-            email = f"{tag_uid}@example.com"
+            if not guest_email:
+                print("[ERROR] No guest email found on card.")
+                return
+            email = guest_email
             password = tag_uid
             device_id = api_client.login(email, password)
             print(f"[LOGIN] Logged in as {email}, device ID: {device_id}")

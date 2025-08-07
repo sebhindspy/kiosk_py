@@ -15,6 +15,39 @@ def read_device_id(tag_uid):
         return "DEVICE-ID-12345"
     return tag_uid
 
+def read_guest_email_from_card(conn):
+    """
+    Reads guest email from card using:
+    - email_length at 0x100 (1 byte)
+    - guest_email at 0x101 (max 127 bytes)
+    Returns the email as a string, or None if not found/invalid.
+    """
+    try:
+        # Read email_length
+        apdu = [0x00, 0xB0, 0x01, 0x00, 0x01]  # 0x100 offset
+        response, sw1, sw2 = conn.transmit(apdu)
+        if (sw1, sw2) != (0x90, 0x00) or not response:
+            print("[DEBUG] Failed to read email length from card")
+            return None
+        email_length = response[0]
+        if email_length == 0 or email_length > 127:
+            print(f"[DEBUG] Invalid email length: {email_length}")
+            return None
+
+        # Read guest_email
+        apdu = [0x00, 0xB0, 0x01, 0x01, email_length]  # 0x101 offset
+        response, sw1, sw2 = conn.transmit(apdu)
+        if (sw1, sw2) != (0x90, 0x00) or not response:
+            print("[DEBUG] Failed to read guest email from card")
+            return None
+        guest_email = bytes(response).decode('utf-8', errors='ignore')
+        print(f"[DEBUG] Guest email read from card: {guest_email}")
+        return guest_email
+    except Exception as e:
+        print(f"[ERROR] Exception reading guest email: {e}")
+        return None
+
+
 def wait_for_card(timeout=10):
     if MOCK_NFC:
         print("[TEST] Simulating card tap...")
@@ -144,8 +177,9 @@ def start_card_polling(callback, poll_interval=2):
                             "ride_name": "MOCK_RIDE",
                             "attraction_id": 1
                         }
+                        guest_email = "mock@example.com"
                         print("[MOCK] Simulating card tap")
-                        callback(tag_uid, reservation)
+                        callback(tag_uid, reservation, guest_email)
                         time.sleep(poll_interval)
                         continue
 
@@ -155,15 +189,15 @@ def start_card_polling(callback, poll_interval=2):
                         continue
 
                     reservation = read_reservation_from_card(cardservice.connection)
-                    """if tag_uid and reservation:
-                        callback(tag_uid, reservation)
-                    else:
-                        print("[NFC] No reservation or UID found.")"""
+                    guest_email = read_guest_email_from_card(cardservice.connection)
                     if tag_uid:
-                        callback(tag_uid, reservation)
+                        try:
+                            callback(tag_uid, reservation, guest_email)
+                        except Exception as e:
+                            print(f"[READER ERROR] Exception in callback: {e}")
+                            traceback.print_exc()
                     else:
                         print("[NFC] No UID found.")
-
 
                 except Exception as e:
                     print(f"[NFC] Polling error: {e}")
