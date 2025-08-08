@@ -1,3 +1,7 @@
+################################################################################
+# script to rent a band by writing a null reservation and a chosen email address
+################################################################################
+
 import time
 import ndef
 from smartcard.CardType import AnyCardType
@@ -6,6 +10,13 @@ from smartcard.util import toHexString
 
 def write_data_to_card():
     try:
+        # Prompt user for email address
+        user_email = input("Enter guest email address to rent the band: ").strip()
+
+        # prepare email payload
+        user_email_bytes = user_email.encode("ascii", errors="ignore")
+        user_email_len = len(user_email_bytes)
+        
         print("[NFC] Please tap the card again to write reservation and email...")
 
         # Fresh card connection
@@ -26,14 +37,11 @@ def write_data_to_card():
 
         # Prepare reservation payload
         command_seq = 1
-        attraction_id = 99
-        ride_name = "blank_ride"
-        wait_time_secs = 5940
+        attraction_id = 0 # Replace with actual attraction ID
+        ride_name = "" # Replace with actual ride name
+        wait_time_secs = 0 # Replace with actual wait time in seconds
         ride_name_bytes = ride_name.encode("ascii", errors="ignore")
         ride_name_len = len(ride_name_bytes)
-        user_email = "cat@dog.com"
-        user_email_bytes = user_email.encode("ascii", errors="ignore")
-        user_email_len = len(user_email_bytes)
 
         # Reservation payload (384 bytes)
         payload = bytearray(384)
