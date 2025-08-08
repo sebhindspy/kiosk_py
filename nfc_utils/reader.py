@@ -24,7 +24,7 @@ def read_guest_email_from_card(conn):
     """
     try:
         # Read email_length
-        apdu = [0x00, 0xB0, 0x01, 0x00, 0x01]  # 0x100 offset
+        apdu = [0x00, 0xB0, 0x01, 0x14, 0x01]  # 0x114 offset
         response, sw1, sw2 = conn.transmit(apdu)
         if (sw1, sw2) != (0x90, 0x00) or not response:
             print("[DEBUG] Failed to read email length from card")
@@ -35,7 +35,7 @@ def read_guest_email_from_card(conn):
             return None
 
         # Read guest_email
-        apdu = [0x00, 0xB0, 0x01, 0x01, email_length]  # 0x101 offset
+        apdu = [0x00, 0xB0, 0x01, 0x15, email_length]  # 0x115 offset
         response, sw1, sw2 = conn.transmit(apdu)
         if (sw1, sw2) != (0x90, 0x00) or not response:
             print("[DEBUG] Failed to read guest email from card")

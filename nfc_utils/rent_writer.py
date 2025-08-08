@@ -4,6 +4,7 @@
 
 import time
 import ndef
+import random
 from smartcard.CardType import AnyCardType
 from smartcard.CardRequest import CardRequest
 from smartcard.util import toHexString
@@ -25,6 +26,7 @@ def write_data_to_card():
         cardservice = cardrequest.waitforcard()
         conn = cardservice.connection
         conn.connect()
+        #print(f"[NFC] Card type: {cardtype}")
 
         # Optional: log UID
         GET_UID = [0xFF, 0xCA, 0x00, 0x00, 0x00]
@@ -36,7 +38,7 @@ def write_data_to_card():
             print("[WARNING] Failed to read UID.")
 
         # Prepare reservation payload
-        command_seq = 1
+        command_seq = random.randint(0, 255)
         attraction_id = 0 # Replace with actual attraction ID
         ride_name = "" # Replace with actual ride name
         wait_time_secs = 0 # Replace with actual wait time in seconds
@@ -70,12 +72,12 @@ def write_data_to_card():
             conn.transmit(apdu)
             offset += wr_len
 
-        # Write email length and email directly to 0x100/0x101
-        print(f"[NFC] Writing email length ({user_email_len}) to 0x100...")
-        conn.transmit([0x00, 0xD6, 0x01, 0x00, 0x01, user_email_len])
+        # Write email length and email directly to 0x114/0x115
+        print(f"[NFC] Writing email length ({user_email_len}) to 0x114...")
+        conn.transmit([0x00, 0xD6, 0x01, 0x14, 0x01, user_email_len])
 
-        print(f"[NFC] Writing email '{user_email}' to 0x101...")
-        conn.transmit([0x00, 0xD6, 0x01, 0x01, user_email_len] + list(user_email_bytes))
+        print(f"[NFC] Writing email '{user_email}' to 0x115...")
+        conn.transmit([0x00, 0xD6, 0x01, 0x15, user_email_len] + list(user_email_bytes))
         print("[NFC] Email data written successfully.")
 
         length_bytes = [len(msg) >> 8, len(msg) & 0xFF]

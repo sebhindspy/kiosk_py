@@ -70,12 +70,12 @@ def write_reservation_to_card(reservation):
             print("[WARNING] Failed to read UID.")
 
         # --- Preserve guest email fields ---
-        # Read email length from 0x100
-        resp, sw1, sw2 = conn.transmit([0x00, 0xB0, 0x01, 0x00, 0x01])
+        # Read email length from 0x114
+        resp, sw1, sw2 = conn.transmit([0x00, 0xB0, 0x01, 0x14, 0x01])
         if (sw1, sw2) == (0x90, 0x00) and resp and 0 < resp[0] <= 127:
             email_len = resp[0]
-            # Read email from 0x101
-            resp2, sw1, sw2 = conn.transmit([0x00, 0xB0, 0x01, 0x01, email_len])
+            # Read email from 0x115
+            resp2, sw1, sw2 = conn.transmit([0x00, 0xB0, 0x01, 0x15, email_len])
             if (sw1, sw2) == (0x90, 0x00):
                 email_bytes = bytes(resp2)
             else:
@@ -102,8 +102,8 @@ def write_reservation_to_card(reservation):
 
         # --- Restore guest email fields ---
         if email_len > 0 and len(email_bytes) == email_len:
-            payload[0x100] = email_len
-            payload[0x101:0x101+email_len] = email_bytes
+            payload[0x114] = email_len
+            payload[0x115:0x115+email_len] = email_bytes
 
         record = ndef.Record('urn:nfc:ext:qb3:memory', '1', payload)
         msg = b''.join(ndef.message_encoder([record]))
