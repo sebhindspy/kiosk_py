@@ -4,6 +4,7 @@ from smartcard.util import toHexString, toBytes
 import random
 from datetime import datetime
 import time
+import ndef
 
 SCARD_REQUEST_TIMEOUT = 10
 SCARD_MAX_READ_LEN = 246
@@ -13,6 +14,7 @@ SCARD_SW_OKAY = 0x9000
 
 NDEF_RECORD_HEADER_LEN = 18
 NDEF_RECORD_PAYLOAD_LEN = 384
+MAX_GUEST_EMAIL_LEN = 127
 
 REPLYF_INBOOTLOADER = 0x80
 REPLYF_RESVNVALID   = 0x40
@@ -100,7 +102,7 @@ def scard_write_ndef_message(address, data, length):
         #   Write binary
         offset = address + i
         apdu = [0x00, 0xD6, (offset>>8), (offset & 0xff), wr_len]
-        apdu.extend(data)
+        apdu.extend(data[i:i+wr_len])
         response, sw1, sw2 = cardservice.connection.transmit(apdu)
         if ((sw1<<8) + sw2) != SCARD_SW_OKAY:
             print(f"Failed to write NDEF message {sw1:02X}{sw2:02X}")
@@ -130,6 +132,27 @@ def read_ndef_message():
             line = f"0x{i:02X}:\t{byte:02X}  "
         else:
             line += f'{byte:02X}  '
+
+def restore_ndef_message():
+    #   Create dummy data, 384 bytes filled with 0xAA
+    data = bytearray([0x00] * NDEF_RECORD_PAYLOAD_LEN)
+    #   TNF:ext, domain:qb3, type:memory, ID:1
+    record = ndef.Record('urn:nfc:ext:qb3:memory', '1', data)
+    encoder = ndef.message_encoder()
+    msg = list(b''.join((ndef.message_encoder([record,]))))
+    
+    scard_connect()
+    if scard_select_app() != SCARD_SW_OKAY:
+        return
+    if scard_select_ndef_file() != SCARD_SW_OKAY:
+        return
+    #   Clear message length first
+    scard_write_ndef_message(0, [0, 0], SCARD_NDEF_MSG_SIZE_LEN)
+    #   Write NDEF record
+    scard_write_ndef_message(2, msg, len(msg))
+    #   Write back message length
+    msg_len = NDEF_RECORD_HEADER_LEN + NDEF_RECORD_PAYLOAD_LEN;
+    scard_write_ndef_message(0, [(msg_len>>8), (msg_len&0xff)], SCARD_NDEF_MSG_SIZE_LEN)
             
 def bcd_to_int(bcd):
     return (((bcd & 0xf0)>>4)*10) + (bcd & 0x0f)
@@ -144,6 +167,8 @@ def use_reseravtion():
         return
     if scard_select_ndef_file() != SCARD_SW_OKAY:
         return
+    #   Clear message length first
+    scard_write_ndef_message(0, [0, 0], SCARD_NDEF_MSG_SIZE_LEN)
     #   Write read reservation command    
     payload = [0] * 4
     payload[0] = random.randint(0, 255) # random command sequence
@@ -387,8 +412,51 @@ def set_icons():
     msg_len = NDEF_RECORD_HEADER_LEN + NDEF_RECORD_PAYLOAD_LEN;
     scard_write_ndef_message(0, [(msg_len>>8), (msg_len&0xff)], SCARD_NDEF_MSG_SIZE_LEN)
     
+def shutdown_now():
+    scard_connect()
+    if scard_select_app() != SCARD_SW_OKAY:
+        return
+    if scard_select_ndef_file() != SCARD_SW_OKAY:
+        return
+    #   Clear message length first
+    scard_write_ndef_message(0, [0, 0], SCARD_NDEF_MSG_SIZE_LEN)
+    #   Write shutdown now command    
+    payload = [0] * 4
+    payload[0] = random.randint(0, 255) # random command sequence
+    payload[2] = CMDF_SHUTDOWNNOW & 0xff
+    payload[3] = CMDF_SHUTDOWNNOW>>8
+    scard_write_ndef_message(SCARD_NDEF_MSG_SIZE_LEN + NDEF_RECORD_HEADER_LEN + 64, payload, len(payload))
+    #   Write back message length
+    msg_len = NDEF_RECORD_HEADER_LEN + NDEF_RECORD_PAYLOAD_LEN;
+    scard_write_ndef_message(0, [(msg_len>>8), (msg_len&0xff)], SCARD_NDEF_MSG_SIZE_LEN)
+    
+def write_guest_email():
+    #   Get guest email
+    print("Please enter guest email")
+    email = input()
+    if len(email) > MAX_GUEST_EMAIL_LEN:
+        email = email[:MAX_GUEST_EMAIL_LEN]
+    scard_connect()
+    if scard_select_app() != SCARD_SW_OKAY:
+        return
+    if scard_select_ndef_file() != SCARD_SW_OKAY:
+        return
+    #   Clear message length first
+    scard_write_ndef_message(0, [0, 0], SCARD_NDEF_MSG_SIZE_LEN)
+    #   Write the guest email
+    payload = [0] * (len(email) + 1)
+    #   Set emailLength 0 if input email is empty
+    payload[0] = 0 if email == None else len(email)
+    if payload[0] > 0:
+        payload[1:1+payload[0]] = list(email.encode('ascii'))
+    scard_write_ndef_message(SCARD_NDEF_MSG_SIZE_LEN + NDEF_RECORD_HEADER_LEN + 256, payload, len(payload))
+    #   Write back message length
+    msg_len = NDEF_RECORD_HEADER_LEN + NDEF_RECORD_PAYLOAD_LEN;
+    scard_write_ndef_message(0, [(msg_len>>8), (msg_len&0xff)], SCARD_NDEF_MSG_SIZE_LEN)
+    
 OP_DESC_LIST = (
     "Read NDEF message",
+    "Restore NDEF message",
     "Use reservation",
     "Make reservation",
     "Get time remaining",
@@ -397,10 +465,13 @@ OP_DESC_LIST = (
     "Read battery level",
     "Read temperature",
     "Set icons",
+    "Shutdown now",
+    "Write guest email",
 )
 
 OP_FUNC_LIST = (
     read_ndef_message,
+    restore_ndef_message,
     use_reseravtion,
     make_reservation,
     get_time_remaining,
@@ -409,6 +480,8 @@ OP_FUNC_LIST = (
     get_battery_level,
     get_temperature,
     set_icons,
+    shutdown_now,
+    write_guest_email,
 )
 
 def main():

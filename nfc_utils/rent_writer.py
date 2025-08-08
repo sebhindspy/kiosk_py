@@ -62,18 +62,18 @@ def write_data_to_card():
             conn.transmit(apdu)
             offset += wr_len
 
-        length_bytes = [len(msg) >> 8, len(msg) & 0xFF]
-        conn.transmit([0x00, 0xD6, 0x00, 0x00, 0x02] + length_bytes)
-        print("[NFC] Reservation data written.")
-
         # Write email length and email directly to 0x100/0x101
         print(f"[NFC] Writing email length ({user_email_len}) to 0x100...")
         conn.transmit([0x00, 0xD6, 0x01, 0x00, 0x01, user_email_len])
 
         print(f"[NFC] Writing email '{user_email}' to 0x101...")
         conn.transmit([0x00, 0xD6, 0x01, 0x01, user_email_len] + list(user_email_bytes))
+        print("[NFC] Email data written successfully.")
 
-        print("[NFC] Data written successfully.")
+        length_bytes = [len(msg) >> 8, len(msg) & 0xFF]
+        conn.transmit([0x00, 0xD6, 0x00, 0x00, 0x02] + length_bytes)
+        print("[NFC] Reservation data written.")
+
         return True
 
     except Exception as e:
