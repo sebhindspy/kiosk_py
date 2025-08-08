@@ -2,13 +2,20 @@ from flask import Flask, render_template, request, redirect, session, url_for, j
 import time
 import os
 import requests
+import sys
 
 #my modules
 from kiosk_py.ui import controller
 from kiosk_py.services import api_client
 from kiosk_py.nfc_utils import reader, writer
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+if getattr(sys, 'frozen', False):
+    # Running in a PyInstaller bundle
+    BASE_DIR = sys._MEIPASS
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(
     __name__,
